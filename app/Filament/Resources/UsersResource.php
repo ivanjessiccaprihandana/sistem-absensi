@@ -2,21 +2,16 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\UsersResource\Pages;
+use App\Filament\Resources\UsersResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Tables;
-use App\Models\Students;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use Filament\Forms\Components\Card;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
+use Filament\Tables;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\StudentsResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\StudentsResource\RelationManagers;
 
 class UsersResource extends Resource
 {
@@ -28,22 +23,27 @@ class UsersResource extends Resource
     {
         return $form
             ->schema([
-               TextInput::make('name')
+                Forms\Components\TextInput::make('name')
                     ->required()
                     ->unique()
+                    ->maxLength(255)
                     ->label('Nama Pengguna'),
-                    TextInput::make('email')
+                Forms\Components\TextInput::make('email')
+                    ->email()
                     ->required()
                     ->unique()
+                    ->maxLength(255)
                     ->label('Email'),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->required()
                     ->minLength(8)
-                    ->label('Kata Sandi')
+                    ->maxLength(255)
                     ->dehydrateStateUsing(fn ($state) => bcrypt($state))
-                    ->visibleOn('create'),
-                Select::make('role.name'),
+                    ->label('Kata Sandi'),
+                Forms\Components\Select::make('roles')
+                    ->relationship('roles', 'name')
+                    ->required()
             ]);
     }
 
@@ -51,10 +51,20 @@ class UsersResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->sortable()->searchable(),
-                TextColumn::make('email')->sortable()->searchable(),
-                TextColumn::make('role.name')->label('Peran')->sortable()->searchable(),
-                
+                Tables\Columns\TextColumn::make('name')
+                    ->sortable()
+                    ->searchable()
+                    ->label('Nama Pengguna'),
+                Tables\Columns\TextColumn::make('email')
+                    ->sortable()
+                    ->searchable()
+                    ->label('Email'),
+                     Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->searchable()
+                    ->label('Dibuat Pada'),
+
             ])
             ->filters([
                 //
@@ -79,9 +89,9 @@ class UsersResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStudents::route('/'),
-            'create' => Pages\CreateStudents::route('/create'),
-            'edit' => Pages\EditStudents::route('/{record}/edit'),
+            'index' => Pages\ListUsers::route('/'),
+            'create' => Pages\CreateUsers::route('/create'),
+            'edit' => Pages\EditUsers::route('/{record}/edit'),
         ];
     }
 }
