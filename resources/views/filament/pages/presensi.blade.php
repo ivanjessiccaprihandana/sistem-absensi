@@ -1,5 +1,19 @@
 <x-filament::page>
     <form wire:submit.prevent="submit" class="space-y-6">
+        {{-- Pilih Matkul --}}
+        <div>
+            <label for="selectedSubject" class="block text-sm font-medium text-gray-700 mb-1">
+                Pilih Matkul
+            </label>
+            <select wire:model="selectedSubject" wire:change="$refresh" id="selectedSubject"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500">
+                <option value="">- Pilih Matkul -</option>
+                @foreach ($this->subjects as $subject)
+                <option value="{{ $subject->id }}">{{ $subject->nama }}</option>
+                @endforeach
+            </select>
+        </div>
+
         {{-- Pilih Kelas --}}
         <div>
             <label for="selectedClass" class="block text-sm font-medium text-gray-700 mb-1">

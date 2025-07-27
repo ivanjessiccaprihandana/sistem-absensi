@@ -5,7 +5,8 @@ namespace App\Filament\Pages;
 use App\Models\Meetings;
 use App\Models\Students;
 use App\Models\Attendances;
-use App\Models\Classes; // pastikan model kelas di-import
+use App\Models\Classes;
+use App\Models\Subject;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
 use Filament\Notifications\Notification;
@@ -18,31 +19,43 @@ class Presensi extends Page
 
     public ?int $selectedClass = null;
     public ?int $selectedMeeting = null;
+    public ?int $selectedSubject = null;
     public array $data = [];
     public Collection $students;
     public Collection $classes;
     public Collection $meetings;
+    public Collection $subjects;
 
     public function mount(): void
     {
         $this->classes = $this->getClassesProperty();
+        $this->subjects = $this->getSubjectsProperty();
         $this->meetings = $this->getMeetingsProperty();
         $this->selectedClass = $this->classes->first()?->id;
+        $this->selectedSubject = $this->subjects->first()?->id;
         $this->selectedMeeting = null;
-        $this->students = $this->getStudentsProperty(); // <-- pastikan diisi sesuai kelas
+        $this->students = $this->getStudentsProperty();
     }
 
     public function updatedSelectedClass(): void
     {
         $this->selectedMeeting = null;
-        $this->students = $this->getStudentsProperty(); // <-- refresh students
+        $this->students = $this->getStudentsProperty();
+        $this->meetings = $this->getMeetingsProperty();
+        $this->reset('data');
+    }
+
+    public function updatedSelectedSubject(): void
+    {
+        $this->selectedMeeting = null;
+        $this->meetings = $this->getMeetingsProperty();
+        $this->students = $this->getStudentsProperty();
         $this->reset('data');
     }
 
     public function updatedSelectedMeeting(): void
     {
         $this->reset('data');
-        // Tidak perlu update students, sudah sesuai kelas
         foreach ($this->students as $student) {
             $attendance = Attendances::where('meeting_id', $this->selectedMeeting)
                 ->where('student_id', $student->id)
@@ -59,6 +72,11 @@ class Presensi extends Page
         return Classes::all();
     }
 
+    public function getSubjectsProperty()
+    {
+        return Subject::all();
+    }
+
     public function getStudentsProperty()
     {
         if (!$this->selectedClass) {
@@ -69,7 +87,14 @@ class Presensi extends Page
 
     public function getMeetingsProperty(): \Illuminate\Support\Collection
     {
-        return Meetings::with('class', 'subject')->get();
+        $query = Meetings::with('class', 'subject');
+        if ($this->selectedClass) {
+            $query->where('class_id', $this->selectedClass);
+        }
+        if ($this->selectedSubject) {
+            $query->where('subject_id', $this->selectedSubject);
+        }
+        return $query->get();
     }
 
     public function submit(): void
