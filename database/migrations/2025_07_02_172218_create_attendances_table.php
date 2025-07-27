@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('meeting_id');
             $table->foreignId('student_id');
             $table->string('status');
+            $table->integer('meeting_number')->nullable();
             $table->timestamps();
         });
     }
