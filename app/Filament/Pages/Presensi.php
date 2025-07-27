@@ -2,13 +2,12 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Forms;
-use App\Models\Student;
 use App\Models\Meetings;
 use App\Models\Students;
-use Filament\Pages\Page;
 use App\Models\Attendances;
-use Illuminate\Support\Facades\DB;
+use App\Models\Classes; // pastikan model kelas di-import
+use Filament\Pages\Page;
+use Illuminate\Support\Collection;
 use Filament\Notifications\Notification;
 
 class Presensi extends Page
@@ -17,74 +16,97 @@ class Presensi extends Page
     protected static string $view = 'filament.pages.presensi';
     protected static ?string $title = 'Presensi Siswa';
 
+    public ?int $selectedClass = null;
     public ?int $selectedMeeting = null;
     public array $data = [];
+    public Collection $students;
+    public Collection $classes;
+    public Collection $meetings;
 
     public function mount(): void
     {
-        $this->selectedMeeting = Meetings::latest()->first()?->id;
+        $this->classes = $this->getClassesProperty();
+        $this->meetings = $this->getMeetingsProperty();
+        $this->selectedClass = $this->classes->first()?->id;
+        $this->selectedMeeting = null;
+        $this->students = $this->getStudentsProperty(); // <-- pastikan diisi sesuai kelas
     }
-public function updatedSelectedMeeting(): void
-{
-    $this->data = [];
 
-    $students = $this->students;
+    public function updatedSelectedClass(): void
+    {
+        $this->selectedMeeting = null;
+        $this->students = $this->getStudentsProperty(); // <-- refresh students
+        $this->reset('data');
+    }
 
-    foreach ($students as $student) {
-        $attendance = Attendances::where('meeting_id', $this->selectedMeeting)
-            ->where('student_id', $student->id)
-            ->first();
+    public function updatedSelectedMeeting(): void
+    {
+        $this->reset('data');
+        // Tidak perlu update students, sudah sesuai kelas
+        foreach ($this->students as $student) {
+            $attendance = Attendances::where('meeting_id', $this->selectedMeeting)
+                ->where('student_id', $student->id)
+                ->first();
 
-        if ($attendance) {
-            $this->data['presences'][$student->id] = $attendance->status;
+            if ($attendance) {
+                $this->data['presences'][$student->id] = $attendance->status;
+            }
         }
     }
-}
 
-public function submit(): void
-{
-    $validStudentIds = $this->students->pluck('id')->toArray();
+    public function getClassesProperty()
+    {
+        return Classes::all();
+    }
 
-    foreach ($this->data['presences'] ?? [] as $studentId => $status) {
-        // Hanya simpan jika siswa benar-benar ada di kelas
-        if (!in_array($studentId, $validStudentIds)) {
-            continue;
+    public function getStudentsProperty()
+    {
+        if (!$this->selectedClass) {
+            return collect();
         }
-
-        Attendances::updateOrCreate(
-            [
-                'meeting_id' => $this->selectedMeeting,
-                'student_id' => $studentId,
-            ],
-            [
-                'status' => $status,
-                'meeting_number' => Meetings::find($this->selectedMeeting)?->meeting_number,
-            ]
-        );
+        return Students::where('class_id', $this->selectedClass)->get();
     }
 
-    Notification::make()
-        ->title('Presensi berhasil disimpan')
-        ->success()
-        ->send();
-}
-public function getStudentsProperty()
-{
-    if (!$this->selectedMeeting) {
-        return collect();
-    }
-
-    $meeting = Meetings::find($this->selectedMeeting);
-
-    if (!$meeting) {
-        return collect();
-    }
-
-    return Students::where('class_id', $meeting->class_id)->get();
-}
-
-    public function getMeetingsProperty()
+    public function getMeetingsProperty(): \Illuminate\Support\Collection
     {
         return Meetings::with('class', 'subject')->get();
+    }
+
+    public function submit(): void
+    {
+        $validStudentIds = $this->students->pluck('id')->toArray();
+
+        // Jika pertemuan belum dipilih, jangan simpan presensi
+        if (!$this->selectedMeeting) {
+            Notification::make()
+                ->title('Silakan pilih pertemuan terlebih dahulu')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        foreach ($this->data['presences'] ?? [] as $studentId => $status) {
+            if (!in_array($studentId, $validStudentIds)) {
+                continue;
+            }
+
+            Attendances::updateOrCreate(
+                [
+                    'meeting_id' => $this->selectedMeeting,
+                    'student_id' => $studentId,
+                ],
+                [
+                    'status' => $status,
+                    'meeting_number' => Meetings::find($this->selectedMeeting)?->meeting_number,
+                ]
+            );
+        }
+
+        Notification::make()
+            ->title('Presensi berhasil disimpan')
+            ->success()
+            ->send();
+
+        $this->students = $this->getStudentsProperty();
     }
 }
