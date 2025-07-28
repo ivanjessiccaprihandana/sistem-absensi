@@ -9,7 +9,7 @@ use App\Models\Meetings;
 use App\Models\Subject;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
-use Barryvdh\DomPDF\Facade\Pdf; // Tambahkan ini di bagian use
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RekapPresensi extends Page
 {
@@ -19,16 +19,21 @@ class RekapPresensi extends Page
 
     public Collection $kelasList;
     public Collection $subjectList;
-    public Collection $jurusanList; // Tambahkan property jurusanList
+    public Collection $jurusanList;
+
     public ?string $filterJurusan = null;
+    public ?string $filterKelas = null;
+
     public Collection $rekapSiswaGabung;
 
     public function mount(): void
     {
         $this->kelasList = Classes::all();
         $this->subjectList = Subject::all();
-        $this->jurusanList = $this->subjectList->pluck('nama')->unique()->filter()->values(); // Ambil dari nama matkul
-        $this->filterJurusan = $this->jurusanList->first(); // Default jurusan dari nama matkul
+        $this->jurusanList = $this->subjectList->pluck('nama')->unique()->filter()->values();
+
+        $this->filterJurusan = $this->jurusanList->first();
+        $this->filterKelas = null;
 
         $this->rekapSiswaGabung = $this->getRekapSiswaGabung();
     }
@@ -38,38 +43,33 @@ class RekapPresensi extends Page
         $this->rekapSiswaGabung = $this->getRekapSiswaGabung();
     }
 
-    public function getRekapMatkul()
+    public function updatedFilterKelas()
     {
-        return $this->subjectList->map(function ($subject) {
-            $meetingIds = Meetings::where('subject_id', $subject->id)->pluck('id');
-            $att = Attendances::whereIn('meeting_id', $meetingIds)->get();
-            return [
-                'matkul' => $subject->nama,
-                'hadir' => $att->where('status', 'Hadir')->count(),
-                'izin' => $att->where('status', 'Izin')->count(),
-                'sakit' => $att->where('status', 'Sakit')->count(),
-                'alpa' => $att->where('status', 'Alpa')->count(),
-                'total' => $att->count(),
-            ];
-        });
+        $this->rekapSiswaGabung = $this->getRekapSiswaGabung();
     }
 
     public function getRekapSiswaGabung()
     {
         $result = collect();
-        // Filter subject berdasarkan nama matkul yang dipilih sebagai "jurusan"
         $subjectsFiltered = $this->subjectList->where('nama', $this->filterJurusan);
 
-        foreach ($this->kelasList as $kelas) {
+        $kelasFiltered = $this->filterKelas
+            ? $this->kelasList->filter(fn($kelas) => $kelas->name == $this->filterKelas)
+            : $this->kelasList;
+
+        foreach ($kelasFiltered as $kelas) {
             $students = Students::where('class_id', $kelas->id)->with('class')->get();
+
             foreach ($students as $student) {
                 foreach ($subjectsFiltered as $subject) {
                     $meetingIds = Meetings::where('class_id', $kelas->id)
                         ->where('subject_id', $subject->id)
                         ->pluck('id');
+
                     $att = Attendances::where('student_id', $student->id)
                         ->whereIn('meeting_id', $meetingIds)
                         ->get();
+
                     $result->push([
                         'nama' => $student->nama ?? $student->name,
                         'kelas' => $kelas->name,
@@ -83,6 +83,7 @@ class RekapPresensi extends Page
                 }
             }
         }
+
         return $result;
     }
 
@@ -91,11 +92,13 @@ class RekapPresensi extends Page
         $data = [
             'rekap' => $this->rekapSiswaGabung,
             'filterJurusan' => $this->filterJurusan,
+            'filterKelas' => $this->filterKelas,
         ];
+
         $pdf = Pdf::loadView('filament.pages.rekap-presensi-pdf', $data);
         return response()->streamDownload(
             fn() => print($pdf->stream()),
-            'rekap-presensi-' . ($this->filterJurusan ?? 'all') . '.pdf'
+            'rekap-presensi-' . ($this->filterJurusan ?? 'all') . '-' . ($this->filterKelas ?? 'semua-kelas') . '.pdf'
         );
     }
 }

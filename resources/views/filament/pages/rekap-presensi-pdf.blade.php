@@ -25,6 +25,11 @@
 </head>
 
 <body>
+    <h2>Rekap Siswa Mata Pelajaran ({{ $filterJurusan }})</h2>
+@if ($filterKelas)
+    <p>Kelas: <strong>{{ $filterKelas }}</strong></p>
+@endif
+
     <h2>Rekap Siswa Mata pelajaran ({{ $filterJurusan }})</h2>
     <table>
         <thead>

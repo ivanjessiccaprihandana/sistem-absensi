@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Students;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Attendances extends Model
 {
@@ -25,7 +26,7 @@ class Attendances extends Model
 
             // Meeting.php// Attendance.php
     public function student() {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Students::class);
     }
 
     public function meeting() {
