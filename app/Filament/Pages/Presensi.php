@@ -35,6 +35,7 @@ class Presensi extends Page
         $this->selectedSubject = $this->subjects->first()?->id;
         $this->selectedMeeting = null;
         $this->students = $this->getStudentsProperty();
+        $this->initializePresences();
     }
 
     public function updatedSelectedClass(): void
@@ -42,7 +43,7 @@ class Presensi extends Page
         $this->selectedMeeting = null;
         $this->students = $this->getStudentsProperty();
         $this->meetings = $this->getMeetingsProperty();
-        $this->reset('data');
+        $this->initializePresences();
     }
 
     public function updatedSelectedSubject(): void
@@ -50,20 +51,37 @@ class Presensi extends Page
         $this->selectedMeeting = null;
         $this->meetings = $this->getMeetingsProperty();
         $this->students = $this->getStudentsProperty();
-        $this->reset('data');
+        $this->initializePresences();
     }
 
-    public function updatedSelectedMeeting(): void
+        public function updatedSelectedMeeting(): void
+        {
+            // Jangan reset presences jika user sedang input manual
+            if (!$this->selectedMeeting) {
+                return;
+            }
+
+            foreach ($this->students as $student) {
+                $attendance = Attendances::where('meeting_id', $this->selectedMeeting)
+                    ->where('student_id', $student->id)
+                    ->first();
+
+                if ($attendance) {
+                    // hanya set jika belum pernah diisi (jangan override input manual user)
+                    $this->data['presences'][$student->id] ??= $attendance->status;
+                }
+            }
+        }
+    private function initializePresences(): void
     {
-        $this->reset('data');
+        $this->data['presences'] = [];
+
         foreach ($this->students as $student) {
             $attendance = Attendances::where('meeting_id', $this->selectedMeeting)
                 ->where('student_id', $student->id)
                 ->first();
 
-            if ($attendance) {
-                $this->data['presences'][$student->id] = $attendance->status;
-            }
+            $this->data['presences'][$student->id] = $attendance?->status ?? null;
         }
     }
 
@@ -85,15 +103,17 @@ class Presensi extends Page
         return Students::where('class_id', $this->selectedClass)->get();
     }
 
-    public function getMeetingsProperty(): \Illuminate\Support\Collection
+    public function getMeetingsProperty(): Collection
     {
         $query = Meetings::with('class', 'subject');
+
         if ($this->selectedClass) {
             $query->where('class_id', $this->selectedClass);
         }
         if ($this->selectedSubject) {
             $query->where('subject_id', $this->selectedSubject);
         }
+
         return $query->get();
     }
 
@@ -101,7 +121,6 @@ class Presensi extends Page
     {
         $validStudentIds = $this->students->pluck('id')->toArray();
 
-        // Jika pertemuan belum dipilih, jangan simpan presensi
         if (!$this->selectedMeeting) {
             Notification::make()
                 ->title('Silakan pilih pertemuan terlebih dahulu')
@@ -110,8 +129,21 @@ class Presensi extends Page
             return;
         }
 
-        foreach ($this->data['presences'] ?? [] as $studentId => $status) {
+        if (empty($this->data['presences'])) {
+            Notification::make()
+                ->title('Presensi belum diisi')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        foreach ($this->data['presences'] as $studentId => $status) {
             if (!in_array($studentId, $validStudentIds)) {
+                continue;
+            }
+
+            // Jika status belum diisi, skip siswa ini
+            if (is_null($status) || $status === '') {
                 continue;
             }
 
