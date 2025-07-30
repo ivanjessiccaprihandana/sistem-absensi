@@ -6,11 +6,9 @@
             {{-- Filter Jurusan --}}
             <div>
                 <label for="filterJurusan" class="block mb-1 font-semibold text-sm">Jurusan</label>
-                {{-- Menggunakan wire:model.live agar perubahan langsung memicu update --}}
                 <select wire:model.live="filterJurusan" id="filterJurusan"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
                     <option value="">- Pilih Jurusan -</option>
-                    {{-- Mengambil daftar jurusan secara dinamis dari properti jurusanOptions --}}
                     @foreach ($this->jurusanOptions as $jurusan)
                         <option value="{{ $jurusan }}">{{ $jurusan }}</option>
                     @endforeach
@@ -20,11 +18,9 @@
             {{-- Filter Kelas --}}
             <div>
                 <label for="filterKelas" class="block mb-1 font-semibold text-sm">Kelas</label>
-                {{-- Menggunakan wire:model.live agar perubahan langsung memicu update --}}
                 <select wire:model.live="filterKelas" id="filterKelas"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
                     <option value="">- Pilih Kelas -</option>
-                    {{-- Mengambil daftar kelas secara dinamis dari properti komputasi getKelasListProperty --}}
                     @foreach ($this->kelasList as $kelas)
                         <option value="{{ $kelas->name }}">{{ $kelas->name }}</option>
                     @endforeach
@@ -34,24 +30,26 @@
             {{-- Filter Pertemuan --}}
             <div>
                 <label for="filterPertemuan" class="block mb-1 font-semibold text-sm">Pertemuan</label>
-                {{-- Menggunakan wire:model.live agar perubahan langsung memicu update --}}
                 <select wire:model.live="filterPertemuan" id="filterPertemuan"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
                     <option value="">- Semua Pertemuan -</option>
-                    {{-- MENGGANTI $meeting->pertemuan_ke dengan $meeting->NAMA_KOLOM_YANG_BENAR --}}
                     @foreach ($this->meetingList as $meeting)
-                        <option value="{{ $meeting->id }}">Pertemuan ke-{{ $meeting->meeting_number }}</option> {{-- Ganti 'meeting_number' dengan nama kolom yang benar --}}
+                        <option value="{{ $meeting->id }}">Pertemuan ke-{{ $meeting->meeting_number }}</option>
                     @endforeach
                 </select>
             </div>
         </div>
 
         {{-- Tombol Download PDF --}}
-        <div class="flex justify-end">
-            <x-filament::button wire:click="downloadPdf"
-                class="px-4 py-2 bg-primary-600 text-white rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+         <div class="flex justify-end">
+            {{-- PERBAIKAN DI SINI: Menggunakan <a> tag dengan route() helper untuk meneruskan filter --}}
+            <a href="{{ route('rekap.presensi.pdf', [
+                'filterJurusan' => $filterJurusan,
+                'filterKelas' => $filterKelas,
+                'filterPertemuan' => $filterPertemuan // Pastikan ini dikirim
+            ]) }}" target="_blank" class="px-4 py-2 bg-primary-600 text-white rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                 Download PDF
-            </x-filament::button>
+            </a>
         </div>
 
         {{-- Tabel Rekap --}}

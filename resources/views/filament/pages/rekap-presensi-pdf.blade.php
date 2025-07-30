@@ -5,10 +5,15 @@
     <meta charset="utf-8">
     <title>Rekap Presensi PDF</title>
     <style>
+        body {
+            font-family: sans-serif;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
+            margin-top: 15px; /* Added some margin for better spacing */
         }
 
         th,
@@ -21,16 +26,28 @@
         th {
             background: #eee;
         }
+
+        h2 {
+            margin-bottom: 5px; /* Adjust spacing for headings */
+        }
+
+        p {
+            margin-bottom: 3px; /* Adjust spacing for paragraphs */
+        }
     </style>
 </head>
 
 <body>
     <h2>Rekap Siswa Mata Pelajaran ({{ $filterJurusan }})</h2>
-@if ($filterKelas)
-    <p>Kelas: <strong>{{ $filterKelas }}</strong></p>
-@endif
+    @if ($filterKelas)
+        <p>Kelas: <strong>{{ $filterKelas }}</strong></p>
+    @endif
 
-    <h2>Rekap Siswa Mata pelajaran ({{ $filterJurusan }})</h2>
+    {{-- Menambahkan informasi pertemuan di sini --}}
+    <p>Pertemuan: <strong>{{ $namaPertemuan }}</strong></p>
+
+    {{-- Judul ini mungkin duplikat, Anda bisa menghapusnya jika tidak diperlukan --}}
+    {{-- <h2>Rekap Siswa Mata pelajaran ({{ $filterJurusan }})</h2> --}}
     <table>
         <thead>
             <tr>
