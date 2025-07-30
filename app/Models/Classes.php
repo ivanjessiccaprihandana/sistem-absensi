@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Students;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Classes extends Model
 {
@@ -16,7 +17,7 @@ class Classes extends Model
 
     // Class.php
     public function students() {
-        return $this->hasMany(Student::class);
+        return $this->hasMany(Students::class);
     }
 
     public function meetings() {

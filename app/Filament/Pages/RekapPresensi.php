@@ -2,14 +2,14 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Classes;
-use App\Models\Students;
 use App\Models\Attendances;
+use App\Models\Classes;
 use App\Models\Meetings;
+use App\Models\Students;
 use App\Models\Subject;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class RekapPresensi extends Page
 {
@@ -23,6 +23,7 @@ class RekapPresensi extends Page
 
     public ?string $filterJurusan = null;
     public ?string $filterKelas = null;
+    public ?string $filterPertemuan = null;
 
     public Collection $rekapSiswaGabung;
 
@@ -34,21 +35,37 @@ class RekapPresensi extends Page
 
         $this->filterJurusan = $this->jurusanList->first();
         $this->filterKelas = null;
+        $this->filterPertemuan = null;
 
         $this->rekapSiswaGabung = $this->getRekapSiswaGabung();
     }
 
-    public function updatedFilterJurusan()
+    public function getPertemuanListProperty(): Collection
     {
-        $this->rekapSiswaGabung = $this->getRekapSiswaGabung();
+        if (!$this->filterJurusan || !$this->filterKelas) {
+            return collect(); // kosong kalau belum dipilih jurusan dan kelas
+        }
+
+        $subject = Subject::where('nama', $this->filterJurusan)->first();
+        $kelas = Classes::where('name', $this->filterKelas)->first();
+
+        if (!$subject || !$kelas) {
+            return collect();
+        }
+
+        return Meetings::where('subject_id', $subject->id)
+            ->where('class_id', $kelas->id)
+            ->get();
     }
 
-    public function updatedFilterKelas()
+    public function updated($property): void
     {
-        $this->rekapSiswaGabung = $this->getRekapSiswaGabung();
+        if (in_array($property, ['filterJurusan', 'filterKelas', 'filterPertemuan'])) {
+            $this->rekapSiswaGabung = $this->getRekapSiswaGabung();
+        }
     }
 
-    public function getRekapSiswaGabung()
+    public function getRekapSiswaGabung(): Collection
     {
         $result = collect();
         $subjectsFiltered = $this->subjectList->where('nama', $this->filterJurusan);
@@ -58,13 +75,18 @@ class RekapPresensi extends Page
             : $this->kelasList;
 
         foreach ($kelasFiltered as $kelas) {
-            $students = Students::where('class_id', $kelas->id)->with('class')->get();
+            $students = Students::where('class_id', $kelas->id)->get();
 
             foreach ($students as $student) {
                 foreach ($subjectsFiltered as $subject) {
-                    $meetingIds = Meetings::where('class_id', $kelas->id)
-                        ->where('subject_id', $subject->id)
-                        ->pluck('id');
+                    $meetingQuery = Meetings::where('class_id', $kelas->id)
+                        ->where('subject_id', $subject->id);
+
+                    if ($this->filterPertemuan) {
+                        $meetingQuery->where('id', $this->filterPertemuan);
+                    }
+
+                    $meetingIds = $meetingQuery->pluck('id');
 
                     $att = Attendances::where('student_id', $student->id)
                         ->whereIn('meeting_id', $meetingIds)
@@ -93,12 +115,14 @@ class RekapPresensi extends Page
             'rekap' => $this->rekapSiswaGabung,
             'filterJurusan' => $this->filterJurusan,
             'filterKelas' => $this->filterKelas,
+            'filterPertemuan' => $this->filterPertemuan,
         ];
 
         $pdf = Pdf::loadView('filament.pages.rekap-presensi-pdf', $data);
         return response()->streamDownload(
-            fn() => print($pdf->stream()),
-            'rekap-presensi-' . ($this->filterJurusan ?? 'all') . '-' . ($this->filterKelas ?? 'semua-kelas') . '.pdf'
+            fn () => print($pdf->stream()),
+            'rekap-presensi-' . ($this->filterJurusan ?? 'all') . '-' . ($this->filterKelas ?? 'semua-kelas') . '-' . ($this->filterPertemuan ?? 'semua-pertemuan') . '.pdf'
         );
     }
 }
+    
