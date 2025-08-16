@@ -1,89 +1,98 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Presensi - SDN 19 Kepahyang</title>
-    @vite('resources/css/app.css')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
-    @stack('styles')
+    
+    <title>Sistem Presensi Digital</title> <!-- Judul umum untuk layout -->
+
+    <link rel="icon" href="{{ asset('images/icon-sekolah.png') }}" type="image/png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Menggunakan Inter */
+            color: #2d3748;
+        }
+    </style>
 </head>
-<body class="font-sans bg-gray-50">
-    @auth
-        <!-- Admin Navbar -->
-        <header class="bg-blue-800 text-white shadow-md sticky top-0 z-50">
-            <nav class="container mx-auto px-6 py-3">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo SDN 19 Kepahyang" class="h-10">
-                        <div>
-                            <h1 class="text-lg font-bold">Sistem Presensi</h1>
-                            <p class="text-xs">SDN 19 Kepahyang</p>
-                        </div>
-                    </div>
-                 
-                    <button class="md:hidden focus:outline-none">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                </div>
-            </nav>
-        </header>
-    @else
-        <!-- Public Navbar -->
-        <header class="bg-white shadow-md sticky top-0 z-50">
-            <nav class="container mx-auto px-6 py-3">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo SDN 19 Kepahyang" class="h-12">
-                        <div>
-                            <h1 class="text-xl font-bold text-blue-800">SDN 19 Kepahyang</h1>
-                            <p class="text-sm text-gray-600">Sistem Presensi Digital</p>
-                        </div>
-                    </div>
-                    <div class="hidden md:flex items-center space-x-8">
-                        <a href="#home" class="text-blue-800 font-medium hover:text-blue-600">Beranda</a>
-                        <a href="#features" class="text-gray-600 hover:text-blue-800">Fitur</a>
-                        <a href="#login" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">Login Admin</a>
-                    </div>
-                    <button class="md:hidden text-gray-600 focus:outline-none">
-                        <i class="fas fa-bars text-2xl"></i>
-                    </button>
-                </div>
-            </nav>
-        </header>
-    @endauth
+<body class="antialiased">
 
-    <!-- Main Content -->
-    <main>
-        @yield('content')
-    </main>
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <!-- Logo/Nama Aplikasi -->
+            <a href="/" class="flex items-center space-x-2 text-blue-600 font-bold text-xl">
+                <img src="{{ asset('images/logo-sekolah.png') }}" alt="Logo SDN 19 Kepahiang" class="rounded-full h-10 w-10">
+                <span>Sekolah Dasar Negeri 19 Kepahiang</span>
+            </a>
 
-    <!-- Footer -->
-    <footer class="bg-blue-900 text-white py-8">
-        <div class="container mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Navigasi Utama -->
+            <div class="hidden md:flex space-x-6">
+                <a href="/" class="text-gray-600 hover:text-blue-600 font-medium transition duration-300">Beranda</a>
+                <a href="#features" class="text-gray-600 hover:text-blue-600 font-medium transition duration-300">Fitur</a>
+                {{-- Anda bisa menambahkan link lain di sini, misalnya untuk login admin --}}
+                {{-- <a href="{{ url('admin/login') }}" class="text-gray-600 hover:text-blue-600 font-medium transition duration-300">Login Admin</a> --}}
+            </div>
+
+            <!-- Tombol Hamburger untuk Mobile (jika diperlukan, bisa ditambahkan JavaScript) -->
+            <div class="md:hidden">
+                <button class="text-gray-600 hover:text-blue-600 focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    {{-- Ini adalah tempat di mana konten dari home.blade.php akan ditempatkan --}}
+    @yield('content')
+
+    <!-- Footer yang Diperbarui -->
+    <footer class="bg-blue-800 text-white py-12 md:py-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left max-w-5xl mx-auto">
+                <!-- Kolom 1: Informasi Sekolah -->
                 <div>
-                    <h3 class="text-xl font-bold mb-4">SDN 19 Kepahyang</h3>
-                    <p class="mb-4">Jl. Pendidikan No. 19, Desa Kepahyang, Kec. Kota Agung, Kab. Tanggamus, Lampung</p>
+                    <h3 class="text-xl font-bold mb-4">SDN 19 Kepahiang</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Imigrasi Permu, Kec. Kepahiang, Kabupaten Kepahiang, Bengkulu
+                    </p>
                 </div>
+
+                <!-- Kolom 2: Deskripsi Sistem -->
                 <div>
                     <h3 class="text-xl font-bold mb-4">Sistem Presensi Digital</h3>
-                    <p>Solusi modern untuk manajemen kehadiran siswa berbasis web.</p>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Solusi modern untuk manajemen kehadiran siswa berbasis web.
+                    </p>
                 </div>
+
+                <!-- Kolom 3: Kontak -->
                 <div>
                     <h3 class="text-xl font-bold mb-4">Kontak</h3>
-                    <p class="mb-2"><i class="fas fa-phone-alt mr-2"></i> (0722) 1234567</p>
-                    <p><i class="fas fa-envelope mr-2"></i> sdn19kepahyang@email.com</p>
+                    <ul class="text-gray-300 text-sm space-y-2">
+                        <li class="flex items-center justify-center md:justify-start">
+                            <i class="fas fa-phone-alt mr-2"></i>
+                            <span>(0722) 1234567</span>
+                        </li>
+                        <li class="flex items-center justify-center md:justify-start">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <span>sdn19kepahiang@email.com</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <div class="border-t border-blue-800 mt-8 pt-6 text-center">
-                <p>&copy; 2023 SDN 19 Kepahyang. All rights reserved.</p>
+
+            <!-- Hak Cipta -->
+            <div class="border-t border-blue-700 mt-10 pt-8 text-center text-gray-400 text-sm">
+                &copy; 2025 SDN 19 Kepahiang. All rights reserved.
             </div>
         </div>
     </footer>
 
-    <script src="{{ asset('js/script.js') }}"></script>
-    @stack('scripts')
 </body>
 </html>

@@ -10,12 +10,10 @@ class Classes extends Model
 {
     use HasFactory;
 
-    protected $fillable= [
+    protected $fillable = [
         'name',
     ];
 
-
-    // Class.php
     public function students() {
         return $this->hasMany(Students::class);
     }
@@ -23,5 +21,4 @@ class Classes extends Model
     public function meetings() {
         return $this->hasMany(Meetings::class);
     }
-
 }

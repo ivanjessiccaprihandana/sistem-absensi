@@ -25,7 +25,7 @@ class Meetings extends Model
     }
 
     public function attendances() {
-        return $this->hasMany(Attendances::class, 'meeting_id'); // ✅ sebutkan foreign key yang BENAR
+        return $this->hasMany(Attendances::class, 'meeting_id'); 
     }
     
 
